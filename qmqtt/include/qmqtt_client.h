@@ -82,6 +82,7 @@ class QMQTTSHARED_EXPORT Client : public QObject
 
     Q_PROPERTY(quint32 port READ port WRITE setPort);
     Q_PROPERTY(QString host READ host WRITE setHost);
+    Q_PROPERTY(QString uri READ uri WRITE setUri);
     Q_PROPERTY(QString clientId READ clientId WRITE setClientId);
     Q_PROPERTY(QString username READ username WRITE setUsername);
     Q_PROPERTY(QString password READ password WRITE setPassword);
@@ -105,6 +106,8 @@ public:
     void setHost(const QString & host);
     quint32 port() const;
     void setPort(quint32 port);
+    QString uri() const;
+    void setUri(const QString & uri);
 
     QString clientId() const;
     void setClientId(const QString &clientId);

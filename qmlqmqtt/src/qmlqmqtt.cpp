@@ -172,10 +172,20 @@ quint16 QmlQmqtt::publishMessageObject(QMQTT::Message &message) const {
     return 0;
 }
 
-quint16 QmlQmqtt::publish(const QString& topic, const QString& payload, int qos) const {
+Q_INVOKABLE quint16 QmlQmqtt::publishArray(const QString& topic, const QList<int>& payload, int qos) const
+{
+    QByteArray bytes;
+    bytes.reserve(payload.length());
+    for(int i=0;i<payload.length();i++){
+        bytes.append((qint8)(payload[i]&0xff));
+    }
+    return publish(topic,bytes,qos);
+}
+
+quint16 QmlQmqtt::publish(const QString& topic, const QByteArray& payload, int qos) const {
     QMQTT::Message message;
     message.setTopic(topic);
-    message.setPayload(payload.toUtf8());
+    message.setPayload(payload);
     message.setQos(qos);
     return this->publishMessageObject(message);
 }

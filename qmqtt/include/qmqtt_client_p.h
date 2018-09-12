@@ -40,10 +40,12 @@
 
 #include "qmqtt_global.h"
 #include "qmqtt_message.h"
+#include "qmqtt_client.h"
 #include "qmqtt_will.h"
+#include "qmqtt_network.h"
+#include "qmqtt_websocket.h"
 
 namespace QMQTT {
-
 class ClientPrivate
 {
 
@@ -54,7 +56,8 @@ public:
     ~ClientPrivate();
     void init(QObject * parent = 0);
     void init(const QString & host, int port, QObject *parent = 0);
-
+    void init(const QString & uri, QObject *parent = 0);
+    QString uri_ws;
     QString host;
     quint32 port;
     quint16 gmid;
@@ -69,6 +72,7 @@ public:
 
     QPointer<QMQTT::Will> will;
     QPointer<QMQTT::Network> network;
+    QPointer<QMQTT::NetworkWebSocket> network_ws;
     QPointer<QTimer> timer;
 
     Client * const pq_ptr;
@@ -76,6 +80,7 @@ public:
 public slots:
     void sockConnect();
     void sendConnect();
+    void sendFrame(Frame&frame);
     void sendPing();
     quint16 sendUnsubscribe(const QString &topic);
     quint16 sendSubscribe(const QString &topic, quint8 qos);

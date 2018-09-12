@@ -37,11 +37,12 @@ namespace QMQTT {
 
 ClientPrivate::ClientPrivate(Client *q) :
     host("localhost"),
-    port(1883),
+    port(1883),    
     keepalive(300),
     pq_ptr(q)
 {
     gmid= 1;
+    uri_ws="";
 }
 
 ClientPrivate::~ClientPrivate()
@@ -56,26 +57,73 @@ void ClientPrivate::init(QObject * parent)
         timer = new QTimer(pq_func());
     }
     QObject::connect(timer, SIGNAL(timeout()), pq_func(), SLOT(ping()));
-    if(!network){
-        network = new Network(pq_func());
+    if (!this->host.isEmpty()){
+        if (network_ws){
+            network_ws->deleteLater();
+            network_ws.clear();
+        }
+        if(!network){
+            network = new Network(pq_func());
+        }
+        //TODO: FIXME LATER, how to handle socket error?
+        QObject::connect(network, SIGNAL(connected()), pq_func(), SLOT(onConnected()));
+        QObject::connect(network, SIGNAL(error(QAbstractSocket::SocketError)), pq_func(), SIGNAL(error(QAbstractSocket::SocketError)));
+        QObject::connect(network, SIGNAL(disconnected()), pq_func(), SLOT(onDisconnected()));
+        QObject::connect(network, SIGNAL(received(Frame &)), pq_func(), SLOT(onReceived(Frame &)));
+    }else if (!this->uri_ws.isEmpty()){
+        if (network){
+            network->deleteLater();
+            network.clear();
+        }
+        if(!network_ws){
+            network_ws = new NetworkWebSocket(pq_func());
+        }
+        //TODO: FIXME LATER, how to handle socket error?
+        QObject::connect(network_ws, SIGNAL(connected()), pq_func(), SLOT(onConnected()));
+        QObject::connect(network_ws, SIGNAL(error(QAbstractSocket::SocketError)), pq_func(), SIGNAL(error(QAbstractSocket::SocketError)));
+        QObject::connect(network_ws, SIGNAL(disconnected()), pq_func(), SLOT(onDisconnected()));
+        QObject::connect(network_ws, SIGNAL(received(Frame &)), pq_func(), SLOT(onReceived(Frame &)));
     }
-    //TODO: FIXME LATER, how to handle socket error?
-    QObject::connect(network, SIGNAL(connected()), pq_func(), SLOT(onConnected()));
-    QObject::connect(network, SIGNAL(error(QAbstractSocket::SocketError)), pq_func(), SIGNAL(error(QAbstractSocket::SocketError)));
-    QObject::connect(network, SIGNAL(disconnected()), pq_func(), SLOT(onDisconnected()));
-    QObject::connect(network, SIGNAL(received(Frame &)), pq_func(), SLOT(onReceived(Frame &)));
+
 }
 
 void ClientPrivate::init(const QString &host, int port, QObject * parent)
 {
     this->host = host;
     this->port = port;
+    if (!host.isEmpty()){
+        this->uri_ws="";
+    }
     init(parent);
 }
 
+ void ClientPrivate::init(const QString & uri, QObject *parent)
+ {
+     this->uri_ws = uri;
+     if (!uri.isEmpty()){
+         this->host="";
+     }
+     init(parent);
+ }
+
 void ClientPrivate::sockConnect()
 {
-    network->connectTo(host, port);
+    if (network){
+        network->connectTo(host, port);
+    }
+    if (network_ws){
+        network_ws->connectTo(this->uri_ws);
+    }
+}
+
+void ClientPrivate::sendFrame(Frame&frame)
+{
+    if (network){
+        network->sendFrame(frame);
+    }
+    if (network_ws){
+        network_ws->sendFrame(frame);
+    }
 }
 
 void ClientPrivate::sendConnect()
@@ -123,7 +171,7 @@ void ClientPrivate::sendConnect()
     if (!password.isEmpty()) {
         frame.writeString(password);
     }
-    network->sendFrame(frame);
+    sendFrame(frame);
 }
 
 quint16 ClientPrivate::sendPublish(Message &msg)
@@ -143,7 +191,7 @@ quint16 ClientPrivate::sendPublish(Message &msg)
     if(!msg.payload().isEmpty()) {
         frame.writeRawData(msg.payload());
     }
-    network->sendFrame(frame);
+    sendFrame(frame);
     return msg.id();
 }
 
@@ -151,7 +199,7 @@ void ClientPrivate::sendPuback(quint8 type, quint16 mid)
 {
     Frame frame(type);
     frame.writeInt(mid);
-    network->sendFrame(frame);
+    sendFrame(frame);
 }
 
 quint16 ClientPrivate::sendSubscribe(const QString & topic, quint8 qos)
@@ -161,7 +209,7 @@ quint16 ClientPrivate::sendSubscribe(const QString & topic, quint8 qos)
     frame.writeInt(mid);
     frame.writeString(topic);
     frame.writeChar(qos);
-    network->sendFrame(frame);
+    sendFrame(frame);
     return mid;
 }
 
@@ -171,26 +219,29 @@ quint16 ClientPrivate::sendUnsubscribe(const QString &topic)
     Frame frame(SETQOS(UNSUBSCRIBE, MQTT_QOS1));
     frame.writeInt(mid);
     frame.writeString(topic);
-    network->sendFrame(frame);
+    sendFrame(frame);
     return mid;
 }
 
 void ClientPrivate::sendPing()
 {
     Frame frame(PINGREQ);
-    network->sendFrame(frame);
+    sendFrame(frame);
 }
 
 void ClientPrivate::disconnect()
 {
     sendDisconnect();
-    network->disconnect();
+    if (network)
+        network->disconnect();
+    if (network_ws)
+        network_ws->disconnect();
 }
 
 void ClientPrivate::sendDisconnect()
 {
     Frame frame(DISCONNECT);
-    network->sendFrame(frame);
+    sendFrame(frame);
 }
 
 //FIXME: ok???

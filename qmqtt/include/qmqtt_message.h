@@ -41,7 +41,12 @@ namespace QMQTT {
 class Message : public QObject
 {
     Q_OBJECT
-
+    Q_PROPERTY(quint16 id READ id)
+    Q_PROPERTY(quint8 qos READ qos)
+    Q_PROPERTY(bool retain READ retain)
+    Q_PROPERTY(bool dup READ dup)
+    Q_PROPERTY(QString topic READ topic)
+    Q_PROPERTY(QByteArray payload READ payload)
 public:
     Message(QObject *parent = 0);
     Message(quint16 id, const QString &topic, const QByteArray &payload,

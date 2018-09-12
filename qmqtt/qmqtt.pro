@@ -1,5 +1,5 @@
 QT -= gui
-QT += network
+QT += network websockets
 
 TARGET = qmqtt
 TEMPLATE = lib
@@ -11,7 +11,8 @@ SOURCES += \
     src/qmqtt_frame.cpp \
     src/qmqtt_message.cpp \
     src/qmqtt_network.cpp \
-    src/qmqtt_will.cpp
+    src/qmqtt_will.cpp \
+    src/qmqtt_websocket.cpp
 
 HEADERS += \
     include/qmqtt.h \
@@ -21,7 +22,8 @@ HEADERS += \
     include/qmqtt_global.h \
     include/qmqtt_message.h \
     include/qmqtt_network.h \
-    include/qmqtt_will.h
+    include/qmqtt_will.h \
+    include/qmqtt_websocket.h
 
 INCLUDEPATH += ./include
 

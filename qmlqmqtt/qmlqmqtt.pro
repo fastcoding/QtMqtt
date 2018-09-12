@@ -1,6 +1,6 @@
 TEMPLATE = lib
 TARGET = QmlQmqtt
-QT += qml quick
+QT += qml quick websockets
 CONFIG += qt plugin c++11
 
 TARGET = $$qtLibraryTarget($$TARGET)

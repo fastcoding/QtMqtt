@@ -7,6 +7,7 @@ void QmlQmqttPlugin::registerTypes(const char *uri)
 {
     // @uri QmlQmqtt
     qmlRegisterType<QmlQmqtt>(uri, 1, 0, "QmlQmqtt");
+    qmlRegisterType<QMQTT::Message>(uri, 1, 0, "QmlQmessage");
 }
 
 

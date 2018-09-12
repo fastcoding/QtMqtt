@@ -59,6 +59,16 @@ void Client::setHost(const QString & host)
     pd_func()->host = host;
 }
 
+QString Client::uri() const
+{
+    return pd_func()->uri_ws;
+}
+
+void Client::setUri(const QString & uri)
+{
+    pd_func()->uri_ws = uri;
+}
+
 quint32 Client::port() const
 {
     return pd_func()->port;
